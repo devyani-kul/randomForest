@@ -1,0 +1,136 @@
+setwd("C:/Users/sahasrad/Desktop/Big Data/Animal Shelter outcome")
+
+# Read input data
+in.data <- read.csv("train.csv",stringsAsFactors=F)
+
+# taking a look at structure of the data
+
+str(in.data)
+head(in.data)
+sum(which(is.na(in.data)))
+in.data <- na.omit(in.data)	
+
+# convert age column in the unit of number of days. This code does this conversion
+# from year, months, weeks and days to number of days.
+
+l <- nrow(in.data)
+
+for (i in 1:l)
+{ 
+	pos <- regexpr(' ',in.data$AgeuponOutcome[i])
+	print(pos)
+	number <- as.numeric(substr(in.data$AgeuponOutcome[i],1,pos))
+	print(number)
+	unit <- substr(in.data$AgeuponOutcome[i],pos,8)
+	unit <- trimws(unit,"both")
+	print(unit)
+	if (substr(unit,1,4)== 'year') 
+		{in.data$AgeuponOutcome[i] <- as.numeric(number * 365)}
+	if (substr(unit,1,5) == 'month')
+		{in.data$AgeuponOutcome[i] <- as.numeric(number * 30+ number/2)}
+	if (substr(unit,1,4) == 'week')
+			{in.data$AgeuponOutcome[i] <-as.numeric(number * 7) }
+	if (substr(unit,1,3) == 'day')
+	 			{in.data$AgeuponOutcome[i] <- as.numeric(number)}
+
+}
+
+# Data type conversions
+in.data$OutcomeType <- as.factor(in.data$OutcomeType)
+in.data$Outcomesubtype <- as.factor(in.data$OutcomeSubtype)
+in.data$Breed <- as.factor(in.data$Breed)
+in.data$AnimalType <- as.factor(in.data$AnimalType)
+in.data$AgeuponOutcome <- as.numeric(in.data$AgeuponOutcome)
+in.data$Color <- as.factor(in.data$Color)
+
+# Exploratory data analysis 
+
+table(in.data$OutcomeType)
+table(in.data$OutcomeSubtype)
+
+plot(in.data$OutcomeType)
+plot(in.data$OutcomeSubtype)
+
+library(ggplot2)
+
+
+table(in.data$AnimalType)
+
+cat.data <- in.data[which(in.data$AnimalType =='Cat'),]
+cat.breed <- table(cat.data$Breed)
+cat.breed <- as.data.frame(cat.breed)
+names(cat.breed)[1] <- 'Breed'
+names(cat.breed)[2] <- 'freq'
+top10 <- head(cat.breed[order(-cat.breed$freq),])
+barplot(top10[,2])
+
+# Find out coutcomeType distribution in cats.
+
+table(cat.data$OutcomeType)
+plot(table(cat.data$OutcomeType))
+
+cat.outcome <- cat.data[which(cat.data$Breed=='Domestic Shorthair Mix'),]
+table(cat.outcome$OutcomeType)
+# out of 5505 transfers in cats, 4538 cats were Domestic shorthair Mix.
+
+plot(in.data$OutcomeType)
+boxplot(in.data$AgeuponOutcome)
+summary(in.data$AgeuponOutcome)
+
+trans.data <- in.data[which(in.data$OutcomeType=='Transfer'),]
+#more number of cats were transferred than dogs
+# More dogs were adopted than cats
+adopt.data <- in.data[which(in.data$OutcomeType=='Adoption'),]
+plot(adopt.data$AnimalType)
+
+trans.to.owner <- in.data[which(in.data$OutcomeType=='Return_to_owner'),]
+table(trans.to.owner$AnimalType)
+# More dogs than cats were returned to owner
+
+euthanasia.data <- in.data[which(in.data$OutcomeType=='Euthanasia'),]
+table(euthanasia.data$AnimalType)
+# Almost equal cats and dogs were euthanasied
+
+trans.cat.data <- trans.data[which(trans.data$AnimalType=='Cat'),]
+cat.breed.trans <- as.data.frame(table(trans.cat.data$Breed))
+names(cat.breed.trans)[1] <- 'Breed'
+names(cat.breed.trans)[2] <- 'freq'
+top.breed.trans <- head(cat.breed.trans[order(-cat.breed.trans$freq),])
+barplot(top.breed.trans[,2])
+summary(trans.data$AgeuponOutcome)
+
+# lets now take Color as variable of interest
+
+plot(trans.data$Color)
+plot(adopt.data$Color)  #Agouti and Bluee seem to be  most popular colors of pets to be adopted
+plot(trans.to.owner$Color)
+
+# Lets take into consideration OutcomesubType to find out reason of Euthanasia
+
+table(euthanasia.data$Outcomesubtype)  # Most of pets euthanasied seem either to be aggresive or suffering from any ailment
+table(trans.to.owner$AgeuponOutcome)
+# Lets consider Adoption data
+table(adopt.data$AgeuponOutcome)
+barplot(table(adopt.data$AgeuponOutcome))   # Adoption frequency surges when age is 61 days and 1 to 2 year.
+barplot(table(trans.to.owner$AgeuponOutcome)) # Most of the pets are returned to owner betwen age of 1 to 10 years.
+
+# Explore data of pets who are died
+
+died.data <- in.data[which(in.data$OutcomeType=='Died'),]
+plot(died.data$AnimalType)   # Majority number of cats are died than dogs
+barplot(table(died.data$Outcomesubtype))  # 114 out of total 197 died due to suboutcome type "in kennel"
+
+
+
+#  Apply decision trees Algorithm
+library(randomForest)
+library(help=randomForest)
+
+
+
+
+
+
+
+
+
